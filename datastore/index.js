@@ -10,23 +10,39 @@ var items = {};
 exports.create = (text, callback) => {
   // var id = counter.getNextUniqueId();
   // console.log('in index.js create, id = ' + id);
-  counter.getNextUniqueId(function(error, counterString) {
-    var fileDir = counterString + '.txt';
-    fs.writeFile(path.join(__dirname, '../test/testData', fileDir), text, function(error) {
-      if (error) {
-        // throw error;
-        console.log('error');
-      } else {
-        callback(null, { 'id': counterString, 'text': text });
-      }
-    });
 
-  });
-
+  // counter.getNextUniqueId(function(error, counterString) {
+  //   var fileDir = counterString + '.txt';
+  //   fs.writeFile(path.join(__dirname, '../test/testData', fileDir), text, function(error) {
+  //     if (error) {
+  //       // throw error;
+  //       console.log('error');
+  //     } else {
+  //       callback(null, { 'id': counterString, 'text': text });
+  //     }
+  //   });
+  // });
 
   // path.join(__dirname, '../test/testData', filedir)
   // var filedir = id + '.txt';
-
+  var promise = new Promise((resolve, reject) => {
+    counter.getNextUniqueId(function(error, counterString) {
+      var fileDir = counterString + '.txt';
+      fs.writeFile(path.join(__dirname, '../test/testData', fileDir), text, function(error) {
+        if (error) {
+          // throw error;
+          // console.log('error');
+          reject(error);
+        } else {
+          // callback(null, { 'id': counterString, 'text': text });
+          resolve({ 'id': counterString, 'text': text });
+        }
+      });
+    });
+  });
+  promise
+    .then(result => callback(null, result))
+    .catch((error) => callback(error));
 };
 
 exports.readAll = (callback) => {
@@ -42,9 +58,23 @@ exports.readAll = (callback) => {
     } else {
       files.forEach(function(file) {
         let id = file.split('.')[0];
-        todoList.push({'id': id, 'text': id});
+        var promise = new Promise((resolve, reject) => {
+          fs.readFile(path.join(__dirname, '../test/testData', file), (err, data) => {
+            if (err) {
+              // callback(null, []);
+              reject(err);
+            } else {
+              var newData = '';
+              newData += data;
+              // todoList.push({'id': id, 'text': newData});
+              resolve({'id': id, 'text': newData});
+            }
+          });
+        });
+        todoList.push(promise);
+        // callback(null, todoList);
       });
-      callback(null, todoList);
+      Promise.all(todoList).then(data => callback(null, data));
     }
   });
 };
@@ -59,16 +89,36 @@ exports.readOne = (id, callback) => {
   //   callback(null, { id, text });
   // }
   let filedir = id + '.txt';
-  fs.readFile(path.join(__dirname, '../test/testData', filedir), (err, text) => {
-    if (err) {
-      console.log(`No item with id: ${id}`);
-      callback(err);
-    } else {
-      var textc = '';
-      textc += text;
-      callback(null, {'id': id, 'text': textc});
-    }
+  // fs.readFile(path.join(__dirname, '../test/testData', filedir), (err, text) => {
+  //   if (err) {
+  //     console.log(`No item with id: ${id}`);
+  //     callback(err);
+  //   } else {
+  //     var textc = '';
+  //     textc += text;
+  //     callback(null, {'id': id, 'text': textc});
+  //   }
+  // });
+
+  var promise = new Promise((resolve, reject) => {
+    fs.readFile(path.join(__dirname, '../test/testData', filedir), (err, text) => {
+      if (err) {
+        // console.log(`No item with id: ${id}`);
+        reject(err);
+        // callback(err);
+      } else {
+        var textc = '';
+        textc += text;
+        // callback(null, {'id': id, 'text': textc});
+        resolve({'id': id, 'text': textc});
+      }
+    });
   });
+
+  promise
+    .then(results => callback(null, results))
+    .catch((err) => callback(err));
+
 };
 
 exports.update = (id, text, callback) => {
@@ -80,20 +130,42 @@ exports.update = (id, text, callback) => {
   //   callback(null, { id, text });
   // }
   let filedir = id + '.txt';
-  fs.access(path.join(__dirname, '../test/testData', filedir), fs.constants.R_OK, (err) => {
-    if (err) {
-      console.log(`No item with id: ${id}`);
-      callback(err);
-    } else {
-      fs.writeFile(path.join(__dirname, '../test/testData', filedir), text, (err) => {
-        if (err) {
-          console.log(`No item with id: ${id}`);
-        } else {
-          callback(null, {id, text});
-        }
-      });
-    }
+  // fs.access(path.join(__dirname, '../test/testData', filedir), fs.constants.R_OK, (err) => {
+  //   if (err) {
+  //     console.log(`No item with id: ${id}`);
+  //     callback(err);
+  //   } else {
+  //     fs.writeFile(path.join(__dirname, '../test/testData', filedir), text, (err) => {
+  //       if (err) {
+  //         console.log(`No item with id: ${id}`);
+  //       } else {
+  //         callback(null, {id, text});
+  //       }
+  //     });
+  //   }
+  // });
+
+  var promise = new Promise((resolve, reject) => {
+    fs.access(path.join(__dirname, '../test/testData', filedir), fs.constants.R_OK, (err) => {
+      if (err) {
+        // console.log(`No item with id: ${id}`);
+        // callback(err);
+        reject(err);
+      } else {
+        fs.writeFile(path.join(__dirname, '../test/testData', filedir), text, (err) => {
+          if (err) {
+            // console.log(`No item with id: ${id}`);
+            reject(err);
+          } else {
+            // callback(null, {id, text});
+            resolve({id, text});
+          }
+        });
+      }
+    });
   });
+
+  promise.then(result => callback(null, result)).catch((err) => callback(err));
 };
 
 exports.delete = (id, callback) => {
@@ -106,14 +178,28 @@ exports.delete = (id, callback) => {
   //   callback();
   // }
   let filedir = id + '.txt';
-  fs.unlink(path.join(__dirname, '../test/testData', filedir), (err) => {
-    if (err) {
-      console.log(`No item with id: ${id}`);
-      callback(err);
-    } else {
-      callback(`Successfully deleted ${id}`);
-    }
+  // fs.unlink(path.join(__dirname, '../test/testData', filedir), (err) => {
+  //   if (err) {
+  //     console.log(`No item with id: ${id}`);
+  //     callback(err);
+  //   } else {
+  //     callback(`Successfully deleted ${id}`);
+  //   }
+  // });
+
+  var promise = new Promise((resolve, reject) => {
+    fs.unlink(path.join(__dirname, '../test/testData', filedir), (err) => {
+      if (err) {
+        // console.log(`No item with id: ${id}`);
+        // callback(err);
+        reject(err);
+      } else {
+        // callback(`Successfully deleted ${id}`);
+        resolve(`Successfully deleted ${id}`);
+      }
+    });
   });
+  promise.then(result => callback(result)).catch((err) => callback(err));
 };
 
 // Config+Initialization code -- DO NOT MODIFY /////////////////////////////////
