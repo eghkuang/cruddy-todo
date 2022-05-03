@@ -36,13 +36,18 @@ const writeCounter = (count, callback) => {
   });
 };
 
+
+//fs.writeFile( file, data, options, callback )
+
 // Public API - Fix this function //////////////////////////////////////////////
 
-exports.getNextUniqueId = () => {
-  counter = counter + 1;
-  return zeroPaddedNumber(counter);
+exports.getNextUniqueId = (cb) => {
+  readCounter( (error, fileData) => {
+    writeCounter(fileData + 1, (error, counterString) => {
+      cb(error, counterString);
+    });
+  });
 };
-
 
 
 // Configuration -- DO NOT MODIFY //////////////////////////////////////////////
