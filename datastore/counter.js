@@ -47,6 +47,13 @@ exports.getNextUniqueId = (cb) => {
       cb(error, counterString);
     });
   });
+
+  // readCounter((err, oldCounter) => {
+  //   var newCounter = oldCounter + 1;
+  //   writeCounter(newCounter, (err, zeroPaddedNumber) => {
+  //     callback(err, zeroPaddedNumber);
+  //   });
+  // });
 };
 
 

@@ -19,6 +19,7 @@ exports.create = (text, callback) => {
   //       console.log('error');
   //     } else {
   //       callback(null, { 'id': counterString, 'text': text });
+  //       // or ES6 version: callback(null, {id, text});
   //     }
   //   });
   // });
@@ -29,9 +30,13 @@ exports.create = (text, callback) => {
     counter.getNextUniqueId(function(error, counterString) {
       var fileDir = counterString + '.txt';
       fs.writeFile(path.join(__dirname, '../test/testData', fileDir), text, function(error) {
+      // var filepath = path.join(exports.dataDir, `${id}.txt`)
+      // fs.writeFile(path.join(filepath, text, function(error) {
+
         if (error) {
           // throw error;
           // console.log('error');
+          // callback(error);
           reject(error);
         } else {
           // callback(null, { 'id': counterString, 'text': text });
@@ -74,7 +79,7 @@ exports.readAll = (callback) => {
         todoList.push(promise);
         // callback(null, todoList);
       });
-      Promise.all(todoList).then(data => callback(null, data));
+      Promise.all(todoList).then((data) => callback(null, data));
     }
   });
 };
